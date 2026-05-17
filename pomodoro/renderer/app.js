@@ -20,6 +20,7 @@ let isRunning = false;
 let isPaused = false;
 let completedPomodoros = 0;
 let timerInterval = null;
+let targetTimestamp = null;
 
 // DOM refs
 const timerDisplay = document.getElementById('timerDisplay');
@@ -126,13 +127,15 @@ function notify(title, body) {
 }
 
 function onTimerTick() {
-  timeRemaining--;
+  const elapsed = Math.floor((targetTimestamp - Date.now()) / 1000);
+  timeRemaining = Math.max(0, elapsed);
   updateDisplay();
 
   if (timeRemaining <= 0) {
     clearInterval(timerInterval);
     timerInterval = null;
     isRunning = false;
+    targetTimestamp = null;
 
     if (phase === PHASES.WORK) {
       completedPomodoros++;
@@ -160,6 +163,7 @@ function startTimer() {
   startBtn.textContent = '工作中';
   startBtn.disabled = true;
   pauseBtn.disabled = false;
+  targetTimestamp = Date.now() + timeRemaining * 1000;
   timerInterval = setInterval(onTimerTick, 1000);
 }
 
@@ -168,6 +172,8 @@ function pauseTimer() {
   isPaused = true;
   clearInterval(timerInterval);
   timerInterval = null;
+  timeRemaining = Math.max(0, Math.ceil((targetTimestamp - Date.now()) / 1000));
+  targetTimestamp = null;
   startBtn.textContent = '继续';
   startBtn.disabled = false;
   pauseBtn.disabled = true;
@@ -178,6 +184,7 @@ function resetTimer() {
   timerInterval = null;
   isRunning = false;
   isPaused = false;
+  targetTimestamp = null;
   startBtn.textContent = '开始';
   startBtn.disabled = false;
   pauseBtn.disabled = true;
@@ -229,6 +236,7 @@ startBtn.addEventListener('click', () => {
   if (isPaused) {
     // Resume
     isPaused = false;
+    targetTimestamp = Date.now() + timeRemaining * 1000;
     timerInterval = setInterval(onTimerTick, 1000);
     startBtn.textContent = '工作中';
     startBtn.disabled = true;
